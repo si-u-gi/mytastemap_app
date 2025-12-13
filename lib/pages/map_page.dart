@@ -11,31 +11,55 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  late final WebViewController controller;
+  late final WebViewController _controller;
 
   @override
   void initState() {
     super.initState();
 
-    controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadFlutterAsset("assets/map.html");
+    final params = const PlatformWebViewControllerCreationParams();
 
-    loadMarkers();
+    _controller = WebViewController.fromPlatformCreationParams(params)
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.transparent)
+      ..addJavaScriptChannel(
+        'Flutter',
+        onMessageReceived: (message) {
+          debugPrint("JS → Flutter: ${message.message}");
+        },
+      )
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (_) async {
+            await _loadMarkers();
+          },
+        ),
+      )
+      ..loadFlutterAsset('assets/map.html');
   }
 
-  Future<void> loadMarkers() async {
-    final stores = await fetchStores(37.4979, 127.0276);
+  Future<void> _loadMarkers() async {
+    try {
+      final stores = await fetchStores(37.4979, 127.0276);
+      final jsonData = jsonEncode(stores);
 
-    final js = "drawMarkers(${jsonEncode(stores)});";
-    await controller.runJavaScript(js);
+      await _controller.runJavaScript("""
+        if (typeof drawMarkers === 'function') {
+          drawMarkers($jsonData);
+        } else {
+          console.error('drawMarkers is not defined');
+        }
+      """);
+    } catch (e) {
+      debugPrint("❌ 지도 데이터 로드 실패: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("내 주변 맛집")),
-      body: WebViewWidget(controller: controller),
+      body: WebViewWidget(controller: _controller),
     );
   }
 }
