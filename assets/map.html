@@ -1,59 +1,86 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <title>My Taste Map</title>
-
-  <style>
-    html, body, #map {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-    }
-  </style>
-
-  <!-- ✅ 카카오 지도 JavaScript SDK -->
-  <!-- ❗ 반드시 JavaScript Key를 사용해야 함 -->
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=28d73fe896f3bb8829428aac2c341cf7"></script>
-</head>
-
 <body>
+  <div id="filter-box">
+    ⭐ ≥ <input id="minRating" type="number" step="0.1" value="0">
+    📝 ≥ <input id="minReview" type="number" value="0">
+    <button onclick="applyFilter()">적용</button>
+  </div>
+
   <div id="map"></div>
-
-  <script>
-    // ✅ 지도 초기화 (기본 중심: 강남)
-    var map = new kakao.maps.Map(document.getElementById('map'), {
-      center: new kakao.maps.LatLng(37.4979, 127.0276),
-      level: 4
-    });
-
-    // ✅ Flutter에서 호출하는 함수
-    // places = Spring → Kakao API → documents 배열
-    function drawMarkers(places) {
-      for (var i = 0; i < places.length; i++) {
-        var p = places[i];
-
-        var marker = new kakao.maps.Marker({
-          map: map,
-          position: new kakao.maps.LatLng(p.y, p.x)
-        });
-
-        // ✅ 마커 클릭 시 가게 이름 표시
-        var info = new kakao.maps.InfoWindow({
-          content:
-            '<div style="padding:5px;font-size:12px;">' +
-            p.place_name +
-            '</div>'
-        });
-
-        kakao.maps.event.addListener(marker, 'click', (function(marker, info) {
-          return function() {
-            info.open(map, marker);
-          }
-        })(marker, info));
-      }
-    }
-  </script>
 </body>
-</html>
+
+<style>
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+#filter-box {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: white;
+  padding: 8px;
+  z-index: 10;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.marker-label {
+  background: white;
+  padding: 4px;
+  font-size: 11px;
+  border-radius: 4px;
+  text-align: center;
+}
+</style>
+
+<script>
+let map;
+let markers = [];
+let overlays = [];
+
+function drawMarkers(stores) {
+  clearAll();
+
+  stores.forEach(store => {
+    const position = new kakao.maps.LatLng(store.lat, store.lng);
+
+    const marker = new kakao.maps.Marker({ position });
+    marker.setMap(map);
+    markers.push(marker);
+
+    const overlay = new kakao.maps.CustomOverlay({
+      position,
+      content: `
+        <div class="marker-label">
+          <b>${store.name}</b><br/>
+          ⭐ ${store.rating ?? 0} · 📝 ${store.reviewCount ?? 0}
+        </div>
+      `,
+      yAnchor: 1.6
+    });
+    overlay.setMap(map);
+    overlays.push(overlay);
+
+    kakao.maps.event.addListener(marker, 'click', () => {
+      alert(`${store.name}\n⭐ ${store.rating}\n📝 ${store.reviewCount}`);
+    });
+  });
+}
+
+function clearAll() {
+  markers.forEach(m => m.setMap(null));
+  overlays.forEach(o => o.setMap(null));
+  markers = [];
+  overlays = [];
+}
+
+function applyFilter() {
+  const minRating = document.getElementById('minRating').value;
+  const minReview = document.getElementById('minReview').value;
+
+  window.flutter_inappwebview
+    ? null
+    : console.log("Flutter 연동 예정");
+}
+</script>
