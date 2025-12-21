@@ -24,8 +24,7 @@ class _MapPageState extends State<MapPage> {
           onPageFinished: (_) => loadMarkers(),
         ),
       )
-      ..loadRequest(Uri.parse("https://api.siugi.dev/map.html"),
-    );
+      ..loadRequest(Uri.parse("https://map.siugi.dev/map.html"),);
   }
 
   Future<void> loadMarkers({
