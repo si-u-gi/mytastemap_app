@@ -18,13 +18,14 @@ class _MapPageState extends State<MapPage> {
     super.initState();
 
     controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageFinished: (_) => loadMarkers(),
-        ),
-      )
-      ..loadRequest(Uri.parse("https://map.siugi.dev/map.html"),);
+    ..setJavaScriptMode(JavaScriptMode.unrestricted)
+    ..setBackgroundColor(Colors.transparent) // ✅ 추가
+    ..setNavigationDelegate(
+      NavigationDelegate(
+        onPageFinished: (_) => loadMarkers(),
+      ),
+    )
+    ..loadRequest(Uri.parse("https://map.siugi.dev/map.html"));
   }
 
   Future<void> loadMarkers({
